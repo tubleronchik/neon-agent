@@ -79,7 +79,7 @@ class Agent:
         result = {"address": self.liability_address, result: ipfs_hash, "success": True}
 
 
-    def _read_configuration(self, path: str) -> dict | None:
+    def _read_configuration(self, path: str) -> dict:
         """Internal method. Loads the configuration.
         :param config_path: Path to the configuration file.
         :return: Python dict with the config
