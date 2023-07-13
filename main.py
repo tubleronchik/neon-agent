@@ -18,6 +18,7 @@ class Agent:
             demand = json.loads(msg["data"])
             offer = self.create_offer(demand)
             ipfs_api.pubsub_publish(self.config["provider_ipfs_topic"], json.dumps(offer))
+            ipfs_api.pubsub_publish(self.config["spot_ipfs_topic"], json.dumps(f"{{objective: {offer['objective']}}}"))
 
     def create_offer(self, demand: dict) -> dict:
         offer = {
@@ -59,7 +60,7 @@ class Agent:
         offer["signature"] = str(web3.eth.Account.sign_message(msg, private_key=self.config["spot_pk"]))
         return offer
 
-    def on_spot_message(self) -> None: # objective | result
+    def on_spot_message(self) -> None: # result
         pass
 
 
