@@ -59,7 +59,7 @@ class Agent:
                 offer["token"],
                 self.w3.toInt(hexstr=offer["cost"]),
                 offer["lighthouse"],
-                offer["lighthouseFee"],
+                self.w3.toInt(hexstr=offer["lighthouseFee"]),
                 offer["validator"],
                 self.w3.toInt(hexstr=offer["validatorFee"]),
                 offer["deadline"],
