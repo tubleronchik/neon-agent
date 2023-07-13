@@ -10,15 +10,18 @@ class Agent:
     def __init__(self, config_path) -> None:
         self.config: dict = self._read_configuration(config_path)
         self.w3 = web3.Web3(web3.Web3.HTTPProvider(self.config["http_node_provider"]))
+        self.liability_address = ""
         ipfs_api.pubsub_subscribe(self.config["provider_ipfs_topic"], self.on_demand_message)
         ipfs_api.pubsub_subscribe(self.config["spot_ipfs_topic"], self.on_spot_message)
-    
-    def on_demand_message(self, msg: dict) -> None: # demand
+
+    def on_demand_message(self, msg: dict) -> None:
+        print(f"msg: {msg}")
         if msg["senderID"] == self.config["ipfs_id_dapp"]:
             demand = json.loads(msg["data"])
             offer = self.create_offer(demand)
+            print(f"offer: {offer}")
             ipfs_api.pubsub_publish(self.config["provider_ipfs_topic"], json.dumps(offer))
-            ipfs_api.pubsub_publish(self.config["spot_ipfs_topic"], json.dumps(f"{{objective: {offer['objective']}}}"))
+            # ipfs_api.pubsub_publish(self.config["spot_ipfs_topic"], json.dumps(f"{{objective: {offer['objective']}}}"))
 
     def create_offer(self, demand: dict) -> dict:
         offer = {
@@ -27,41 +30,53 @@ class Agent:
             "token": demand["token"],
             "cost": demand["cost"],
             "lighthouse": demand["lighthouse"],
+            "lighthouseFee": demand["lighthouseFee"],
             "validator": demand["validator"],
             "validatorFee": demand["validatorFee"],
             "deadline": self.w3.eth.get_block_number() + 1000,
             "nonce": self.w3.eth.get_transaction_count(self.config["spot_address"]),
-            "sender": self.config["spot_address"]
+            "sender": self.config["spot_address"],
         }
-        types = ['bytes',
-                 'bytes',
-                 'address',
-                 'uint256',
-                 'address',
-                 'address',
-                 'uint256',
-                 'uint256',
-                 'uint256',
-                 'address']
+        types = [
+            "bytes",
+            "bytes",
+            "address",
+            "uint256",
+            "address",
+            "uint256",
+            "address",
+            "uint256",
+            "uint256",
+            "uint256",
+            "address",
+        ]
 
-        hash = web3.Web3.soliditySha3(types, [
-            str.encode(offer["model"]), 
-            str.encode(offer["objective"]), 
-            offer["token"], 
-            self.w3.toInt(hexstr=offer["cost"]), 
-            offer["lighthouse"], 
-            offer["validator"],
-            self.w3.toInt(hexstr=offer["validatorFee"]),
-            offer["deadline"],
-            offer["nonce"],
-            offer["sender"]
-        ])
+        hash = web3.Web3.soliditySha3(
+            types,
+            [
+                str.encode(offer["model"]),
+                str.encode(offer["objective"]),
+                offer["token"],
+                self.w3.toInt(hexstr=offer["cost"]),
+                offer["lighthouse"],
+                offer["lighthouseFee"],
+                offer["validator"],
+                self.w3.toInt(hexstr=offer["validatorFee"]),
+                offer["deadline"],
+                offer["nonce"],
+                offer["sender"],
+            ],
+        )
         msg = encode_defunct(hash)
-        offer["signature"] = str(web3.eth.Account.sign_message(msg, private_key=self.config["spot_pk"]))
+        offer["signature"] = str(web3.eth.Account.sign_message(msg, private_key=self.config["spot_pk"]).signature.hex())  
         return offer
 
-    def on_spot_message(self) -> None: # result
-        pass
+    def on_spot_message(self, msg: dict) -> None:  # result
+        if msg["senderID"] == self.config["ipfs_id_spot"]:
+            ipfs_hash = json.loads(msg["data"])["result"]
+
+    def create_result_msg(self, ipfs_hash: str) -> dict:
+        result = {"address": self.liability_address, result: ipfs_hash, "success": True}
 
 
     def _read_configuration(self, path: str) -> dict | None:
@@ -77,8 +92,6 @@ class Agent:
                 return config
         except Exception as e:
             print(f"Couldn't load the configuration file: {e}")
-
-
 
 
 def run() -> None:
