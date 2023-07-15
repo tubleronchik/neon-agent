@@ -5,5 +5,8 @@
     "provider_ipfs_topic": "",
     "spot_ipfs_topic": "",
     "ipfs_id_spot": "",
-    "ipfs_id_provider": ""
+    "ipfs_id_provider": "",
+    "test_user_address": "",
+    "test_user_pk": "",
+    "factory_contract_address": ""
 }

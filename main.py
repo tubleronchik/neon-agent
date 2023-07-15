@@ -16,23 +16,23 @@ class Agent:
 
     def on_demand_message(self, msg: dict) -> None:
         print(f"msg: {msg}")
-        if msg["senderID"] == self.config["ipfs_id_dapp"]:
-            demand = json.loads(msg["data"])
+        demand = json.loads(msg["data"])
+        # if msg["senderID"] == self.config["ipfs_id_dapp"]:
+            # demand = json.loads(msg["data"])
+        if demand["sender"] == self.config["test_user_address"]:
             offer = self.create_offer(demand)
             print(f"offer: {offer}")
             ipfs_api.pubsub_publish(self.config["provider_ipfs_topic"], json.dumps(offer))
-            # ipfs_api.pubsub_publish(self.config["spot_ipfs_topic"], json.dumps(f"{{objective: {offer['objective']}}}"))
 
     def create_offer(self, demand: dict) -> dict:
         offer = {
             "model": demand["model"],
             "objective": demand["objective"],
             "token": demand["token"],
-            "cost": demand["cost"],
-            "lighthouse": demand["lighthouse"],
-            "lighthouseFee": demand["lighthouseFee"],
+            "cost": str(demand["cost"]),
             "validator": demand["validator"],
-            "validatorFee": demand["validatorFee"],
+            "lighthouse": demand["lighthouse"],
+            "lighthouseFee": "1",
             "deadline": self.w3.eth.get_block_number() + 1000,
             "nonce": self.w3.eth.get_transaction_count(self.config["spot_address"]),
             "sender": self.config["spot_address"],
@@ -43,7 +43,6 @@ class Agent:
             "address",
             "uint256",
             "address",
-            "uint256",
             "address",
             "uint256",
             "uint256",
@@ -58,10 +57,9 @@ class Agent:
                 str.encode(offer["objective"]),
                 offer["token"],
                 self.w3.toInt(hexstr=offer["cost"]),
+                offer["validator"],
                 offer["lighthouse"],
                 self.w3.toInt(hexstr=offer["lighthouseFee"]),
-                offer["validator"],
-                self.w3.toInt(hexstr=offer["validatorFee"]),
                 offer["deadline"],
                 offer["nonce"],
                 offer["sender"],
