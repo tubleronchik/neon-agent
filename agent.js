@@ -35,7 +35,6 @@ class Agent {
         console.log(`subscribed to ${config.provider_ipfs_topic}`)
         await ipfs.pubsub.subscribe(config.spot_ipfs_topic, this.onSpotMsg)
         console.log(`subscribed to ${config.spot_ipfs_topic}`)
-
     }
 
     async onProviderMsg(msg) {
@@ -74,6 +73,15 @@ class Agent {
                 await this.sendPubsubMsg(objectiveMsg, config.spot_ipfs_topic)
                 
             }
+            else if (jsonMsg.finalized) {
+                this.STATUS = AVAILABLE
+                console.log(`Status: ${this.STATUS}`)
+                this.demand = undefined
+                if (this.demandQueue.length > 0) {
+                    this.manageQueue()
+                }
+
+            }
         }
     }
 
@@ -102,12 +110,6 @@ class Agent {
                 console.log(`New result from Spot: ${result}`)
                 const resultMsg = {"result": result}
                 await this.sendPubsubMsg(resultMsg, config.provider_ipfs_topic)
-                this.STATUS = "AVAILABLE"
-                console.log(`Status: ${this.STATUS}`)
-                this.demand = undefined
-                if (this.demandQueue.length > 0) {
-                    this.manageQueue()
-                }
             }
             
         }
