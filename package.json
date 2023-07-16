@@ -2,8 +2,6 @@
     "type": "module",
     "dependencies": {
       "bignumber.js": "^9.1.1",
-      "ipfs-client": "^0.10.1",
-      "ipfs-core": "^0.18.1",
       "ipfs-http-client": "^60.0.1",
       "web3": "^1.7.1"
     }
