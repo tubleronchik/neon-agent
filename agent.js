@@ -33,19 +33,18 @@ class Agent {
     }
 
     async onProviderMsg(msg) {
-        let stringMsg = ""
-        stringMsg = String.fromCharCode(...Array.from(msg.data))
-        let m = JSON.parse(stringMsg) 
-        // if (msg.from == config.ipfs_id_dapp) {
-            if (m.liability) {
-                this.liabilityAddress = m.liability
+        if (msg.from == config.ipfs_id_dapp) {
+            const stringMsg = String.fromCharCode(...Array.from(msg.data))
+            const jsonMsg = JSON.parse(stringMsg) 
+            if (jsonMsg.liability) {
+                this.liabilityAddress = jsonMsg.liability
                 console.log(`Liability address: ${this.liabilityAddress}`)
                 const objective = await this.getObjectiveFromLiability()
                 const objectiveMsg = {"objective": objective}
                 await this.sendPubsubMsg(objectiveMsg, config.spot_ipfs_topic)
                 
             }
-            else if (m.sender == config.test_user_address) {
+            else {
                 stringMsg = String.fromCharCode(...Array.from(msg.data))
                 this.demand = JSON.parse(stringMsg) 
                 this.offer = await this.createOffer()
@@ -53,6 +52,7 @@ class Agent {
                 console.log(this.offer)
                 await this.sendPubsubMsg(this.offer, config.provider_ipfs_topic)
             }
+        }
     }
 
     async onSpotMsg(msg) {
