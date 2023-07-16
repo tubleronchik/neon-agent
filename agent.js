@@ -8,7 +8,7 @@ config = JSON.parse(config)
 const web3 = new Web3(config.http_node_provider)
 web3.eth.accounts.wallet.add(config.spot_pk)
 
-const ipfs = create()
+const ipfs = create("http://127.0.0.1:5001")
 
 class Agent {
     constructor() {
@@ -34,8 +34,19 @@ class Agent {
 
     async onProviderMsg(msg) {
         if (msg.from == config.ipfs_id_dapp) {
-            const stringMsg = String.fromCharCode(...Array.from(msg.data))
-            const jsonMsg = JSON.parse(stringMsg) 
+            let stringMsg = String.fromCharCode(...Array.from(msg.data))
+            let jsonMsg = JSON.parse(stringMsg) 
+            stringMsg = String.fromCharCode(...Array.from(msg.data))
+            this.demand = JSON.parse(stringMsg) 
+            this.offer = await this.createOffer()
+            console.log("Offer:")
+            console.log(this.offer)
+            await this.sendPubsubMsg(this.offer, config.provider_ipfs_topic)
+
+        }
+        else if (msg.from == config.ipfs_id_provider) {
+            let stringMsg = String.fromCharCode(...Array.from(msg.data))
+            let jsonMsg = JSON.parse(stringMsg) 
             if (jsonMsg.liability) {
                 this.liabilityAddress = jsonMsg.liability
                 console.log(`Liability address: ${this.liabilityAddress}`)
@@ -43,14 +54,6 @@ class Agent {
                 const objectiveMsg = {"objective": objective}
                 await this.sendPubsubMsg(objectiveMsg, config.spot_ipfs_topic)
                 
-            }
-            else {
-                stringMsg = String.fromCharCode(...Array.from(msg.data))
-                this.demand = JSON.parse(stringMsg) 
-                this.offer = await this.createOffer()
-                console.log("Offer:")
-                console.log(this.offer)
-                await this.sendPubsubMsg(this.offer, config.provider_ipfs_topic)
             }
         }
     }
