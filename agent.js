@@ -36,7 +36,6 @@ class Agent {
         let stringMsg = ""
         stringMsg = String.fromCharCode(...Array.from(msg.data))
         let m = JSON.parse(stringMsg) 
-        console.log(m)
         // if (msg.from == config.ipfs_id_dapp) {
             if (m.liability) {
                 this.liabilityAddress = m.liability
@@ -57,17 +56,18 @@ class Agent {
     }
 
     async onSpotMsg(msg) {
+        console.log(String.fromCharCode(...Array.from(msg.data)))
         if (msg.from == config.ipfs_id_spot) {
             let stringMsg = String.fromCharCode(...Array.from(msg.data))
             let m = JSON.parse(stringMsg) 
             if (m.result) {
                 const result = m.result
+                console.log(`New result from Spot: ${result}`)
                 const resultMsg = {"result": result}
                 await this.sendPubsubMsg(resultMsg, config.provider_ipfs_topic)
             }
             
         }
-        console.log(`New result from Spot: ${msg}`)
     }
 
     async sendPubsubMsg(msg, topic) {
@@ -119,8 +119,8 @@ class Agent {
         const liability = await new web3.eth.Contract(this.liabilityABI, this.liabilityAddress)
         const hexObjective = await liability.methods.objective().call()
         const stringObjective =  web3.utils.hexToUtf8(hexObjective)
-        console.log(`hex objective from liability: ${hexObjective}`)
-        console.log(`objective from liability: ${stringObjective}`)
+        console.log(`Hex objective from liability: ${hexObjective}`)
+        console.log(`Objective from liability: ${stringObjective}`)
         return stringObjective
     }
 
