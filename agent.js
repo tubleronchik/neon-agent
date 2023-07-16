@@ -1,4 +1,3 @@
-import * as IPFS from 'ipfs-core'
 import { create } from 'ipfs-http-client'
 import Web3 from 'web3';
 import { readFileSync } from "fs";
@@ -16,51 +15,72 @@ class Agent {
         this.demand = {}
         this.offer = {}
         this.liabilityAddress = ""
-        this.factoryABI = this.readABI()
-        this.onDemandMsg = this.onDemandMsg.bind(this); // to send context of the Provider into function
+        this.readABI()
+        this.onProviderMsg = this.onProviderMsg.bind(this); // to send context of the Provider into function
         this.onSpotMsg = this.onSpotMsg.bind(this);
         this.createOffer = this.createOffer.bind(this);
+        this.getObjectiveFromLiability = this.getObjectiveFromLiability.bind(this);
         this.ipfsSubscribe()
         
     }
 
     async ipfsSubscribe() {
-        await ipfs.pubsub.subscribe(config.provider_ipfs_topic, this.onDemandMsg)
+        await ipfs.pubsub.subscribe(config.provider_ipfs_topic, this.onProviderMsg)
         console.log(`subscribed to ${config.provider_ipfs_topic}`)
         await ipfs.pubsub.subscribe(config.spot_ipfs_topic, this.onSpotMsg)
         console.log(`subscribed to ${config.spot_ipfs_topic}`)
 
     }
 
-    async onDemandMsg(msg) {
+    async onProviderMsg(msg) {
         let stringMsg = ""
         stringMsg = String.fromCharCode(...Array.from(msg.data))
         let m = JSON.parse(stringMsg) 
+        console.log(m)
         // if (msg.from == config.ipfs_id_dapp) {
-            if (m.sender == config.test_user_address) {
+            if (m.liability) {
+                this.liabilityAddress = m.liability
+                console.log(`Liability address: ${this.liabilityAddress}`)
+                const objective = await this.getObjectiveFromLiability()
+                const objectiveMsg = {"objective": objective}
+                await this.sendPubsubMsg(objectiveMsg, config.spot_ipfs_topic)
+                
+            }
+            else if (m.sender == config.test_user_address) {
                 stringMsg = String.fromCharCode(...Array.from(msg.data))
                 this.demand = JSON.parse(stringMsg) 
                 this.offer = await this.createOffer()
                 console.log("Offer:")
                 console.log(this.offer)
-                await this.sendOffer()
+                await this.sendPubsubMsg(this.offer, config.provider_ipfs_topic)
             }
     }
 
-    onSpotMsg(msg) {
-        console.log(`New msg from Spot: ${msg}`)
+    async onSpotMsg(msg) {
+        if (msg.from == config.ipfs_id_spot) {
+            let stringMsg = String.fromCharCode(...Array.from(msg.data))
+            let m = JSON.parse(stringMsg) 
+            if (m.result) {
+                const result = m.result
+                const resultMsg = {"result": result}
+                await this.sendPubsubMsg(resultMsg, config.provider_ipfs_topic)
+            }
+            
+        }
+        console.log(`New result from Spot: ${msg}`)
     }
 
-    async sendOffer() {
-        const offerMsg = JSON.stringify(this.offer)
-        await ipfs.pubsub.publish(config.provider_ipfs_topic, offerMsg)
-        console.log(`offer published to ${config.provider_ipfs_topic}`)
+    async sendPubsubMsg(msg, topic) {
+        const jsonMsg = JSON.stringify(msg)
+        await ipfs.pubsub.publish(topic, jsonMsg)
+        console.log(`Msg ${jsonMsg} published to ${topic}`)
     }
 
     readABI() {
         let abi = readFileSync(`abi/Factory.json`)
-        let factoryABI = JSON.parse(abi)
-        return factoryABI
+        this.factoryABI = JSON.parse(abi)
+        abi = readFileSync(`abi/Liability.json`)
+        this.liabilityABI = JSON.parse(abi)
     }
 
     async createOffer() {
@@ -94,6 +114,16 @@ class Agent {
         offer.signature = await web3.eth.accounts.sign(hash, config.spot_pk);
         return offer;
     }
+
+    async getObjectiveFromLiability() {
+        const liability = await new web3.eth.Contract(this.liabilityABI, this.liabilityAddress)
+        const hexObjective = await liability.methods.objective().call()
+        const stringObjective =  web3.utils.hexToUtf8(hexObjective)
+        console.log(`hex objective from liability: ${hexObjective}`)
+        console.log(`objective from liability: ${stringObjective}`)
+        return stringObjective
+    }
+
 }
 
 const agent = new Agent()
