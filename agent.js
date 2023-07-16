@@ -40,6 +40,7 @@ class Agent {
 
     async onProviderMsg(msg) {
         if (msg.from == config.ipfs_id_dapp) {
+            console.log(`Status: ${this.STATUS}`)
             let stringMsg = String.fromCharCode(...Array.from(msg.data))
             this.demand = JSON.parse(stringMsg) 
             console.log("Queue")
@@ -48,6 +49,7 @@ class Agent {
             if (this.STATUS == AVAILABLE) {
 
                 this.STATUS = NOT_AVAILABLE
+                console.log(`Status: ${this.STATUS}`)
                 this.offer = await this.createOffer()
                 console.log("Offer:")
                 console.log(this.offer)
@@ -76,6 +78,7 @@ class Agent {
     }
 
     async manageQueue() {
+        console.log(`Status: ${this.STATUS}`)
         if (this.demand && (this.STATUS == NOT_AVAILABLE)) {
             this.demandQueue.push(this.demand)
         }
@@ -100,6 +103,7 @@ class Agent {
                 const resultMsg = {"result": result}
                 await this.sendPubsubMsg(resultMsg, config.provider_ipfs_topic)
                 this.STATUS = "AVAILABLE"
+                console.log(`Status: ${this.STATUS}`)
                 this.demand = undefined
                 if (this.demandQueue.length > 0) {
                     this.manageQueue()
