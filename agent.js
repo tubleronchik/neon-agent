@@ -66,12 +66,12 @@ class Agent {
             let m = {}
             try {
                 let stringMsg = String.fromCharCode(...Array.from(msg.data))
-                let m = JSON.parse(stringMsg)
+                m = JSON.parse(stringMsg)
             } catch (error) {
                 console.log(error)
                 return
             }
-            if (m.model == config.model) {
+            if ((m.model == config.model) && (m.sender != config.spot_address)) {
                 console.log(`Status: ${this.STATUS}`)
                 this.demand = m
                 console.log("Queue")
