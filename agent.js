@@ -63,9 +63,10 @@ class Agent {
             }
         }
         else {
+            let m = {}
             try {
                 let stringMsg = String.fromCharCode(...Array.from(msg.data))
-                let m = JSON.stringify(stringMsg)
+                let m = JSON.parse(stringMsg)
             } catch (error) {
                 console.log(error)
                 return
