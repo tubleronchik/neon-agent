@@ -38,28 +38,7 @@ class Agent {
     }
 
     async onProviderMsg(msg) {
-        if (msg.from == config.ipfs_id_dapp) {
-            console.log(`Status: ${this.STATUS}`)
-            let stringMsg = String.fromCharCode(...Array.from(msg.data))
-            this.demand = JSON.parse(stringMsg) 
-            console.log("Queue")
-            console.log(this.demandQueue)
-
-            if (this.STATUS == AVAILABLE) {
-
-                this.STATUS = NOT_AVAILABLE
-                console.log(`Status: ${this.STATUS}`)
-                this.offer = await this.createOffer()
-                console.log("Offer:")
-                console.log(this.offer)
-                await this.sendPubsubMsg(this.offer, config.provider_ipfs_topic)
-            }
-            else {
-                this.manageQueue()
-            }
-
-        }
-        else if (msg.from == config.ipfs_id_provider) {
+        if (msg.from == config.ipfs_id_provider) {
 
             let stringMsg = String.fromCharCode(...Array.from(msg.data))
             let jsonMsg = JSON.parse(stringMsg) 
@@ -81,6 +60,35 @@ class Agent {
                     this.manageQueue()
                 }
 
+            }
+        }
+        else {
+            try {
+                let stringMsg = String.fromCharCode(...Array.from(msg.data))
+                let m = JSON.stringify(stringMsg)
+            } catch (error) {
+                console.log(error)
+                return
+            }
+            if (m.model == config.model) {
+                console.log(`Status: ${this.STATUS}`)
+                this.demand = m
+                console.log("Queue")
+                console.log(this.demandQueue)
+    
+                if (this.STATUS == AVAILABLE) {
+    
+                    this.STATUS = NOT_AVAILABLE
+                    console.log(`Status: ${this.STATUS}`)
+                    this.offer = await this.createOffer()
+                    console.log("Offer:")
+                    console.log(this.offer)
+                    await this.sendPubsubMsg(this.offer, config.provider_ipfs_topic)
+                }
+                else {
+                    this.manageQueue()
+                }
+    
             }
         }
     }
