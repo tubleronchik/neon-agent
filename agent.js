@@ -59,7 +59,8 @@ class Agent {
                 if (this.demandQueue.length > 0) {
                     this.manageQueue()
                 }
-            else if((jsonMsg.model == config.model) && (m.sender != config.spot_address)) {
+            }
+            else if((jsonMsg.model == config.model) && (jsonMsg.sender != config.spot_address)) {
                 console.log(`Status: ${this.STATUS}`)
                 this.demand = jsonMsg
                 console.log("Queue")
@@ -79,7 +80,6 @@ class Agent {
                 }
             }
 
-            }
         }
     }
 
