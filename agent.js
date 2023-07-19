@@ -59,21 +59,9 @@ class Agent {
                 if (this.demandQueue.length > 0) {
                     this.manageQueue()
                 }
-
-            }
-        }
-        else {
-            let m = {}
-            try {
-                let stringMsg = String.fromCharCode(...Array.from(msg.data))
-                m = JSON.parse(stringMsg)
-            } catch (error) {
-                console.log(error)
-                return
-            }
-            if ((m.model == config.model) && (m.sender != config.spot_address)) {
+            else if((jsonMsg.model == config.model) && (m.sender != config.spot_address)) {
                 console.log(`Status: ${this.STATUS}`)
-                this.demand = m
+                this.demand = jsonMsg
                 console.log("Queue")
                 console.log(this.demandQueue)
     
@@ -89,7 +77,8 @@ class Agent {
                 else {
                     this.manageQueue()
                 }
-    
+            }
+
             }
         }
     }
