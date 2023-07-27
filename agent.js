@@ -86,6 +86,8 @@ class Agent {
     async manageQueue() {
         console.log(`Status: ${this.STATUS}`)
         if (this.demand && (this.STATUS == NOT_AVAILABLE)) {
+            const msg = {"queueLength": this.demandQueue.length, "sender": this.demand.sender, "nonce": this.demand.nonce}
+            await this.sendPubsubMsg(msg, config.provider_ipfs_topic)
             this.demandQueue.push(this.demand)
         }
         else {
